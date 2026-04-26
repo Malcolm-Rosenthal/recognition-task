@@ -1,0 +1,9 @@
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore large image archives (add originals locally, don't commit entire databases)
+images/faces/encoding/*.zip
+images/faces/foils/*.zip
+images/objects/encoding/*.zip
+images/objects/foils/*.zip
