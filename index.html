@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recognition Task</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+
+    :root {
+      --bg: #0f0f0f;
+      --surface: #1a1a1a;
+      --border: #2e2e2e;
+      --text: #e8e8e8;
+      --text-dim: #888;
+      --accent: #c8f542;
+      --danger: #ff4d4d;
+      --radius: 4px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 720px;
+      padding: 2rem;
+    }
+
+    /* ── Screens ── */
+    .screen { display: none; flex-direction: column; align-items: center; gap: 2rem; }
+    .screen.active { display: flex; }
+
+    /* ── Typography ── */
+    .label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 400;
+      line-height: 1.3;
+      text-align: center;
+    }
+
+    p {
+      font-size: 1rem;
+      line-height: 1.7;
+      color: #ccc;
+      text-align: center;
+      max-width: 480px;
+    }
+
+    .mono {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      background: var(--accent);
+      color: #0f0f0f;
+      border: none;
+      padding: 0.75rem 2.5rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: var(--radius);
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .btn-old {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 1rem 3rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      border-radius: var(--radius);
+      transition: all 0.1s;
+      min-width: 160px;
+    }
+    .btn-old:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn-new {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 1rem 3rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      border-radius: var(--radius);
+      transition: all 0.1s;
+      min-width: 160px;
+    }
+    .btn-new:hover { border-color: #888; color: #aaa; }
+
+    .response-buttons {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    /* ── Image display ── */
+    .image-frame {
+      width: 400px;
+      height: 400px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .image-frame img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    /* ── Progress ── */
+    .progress-bar-track {
+      width: 100%;
+      max-width: 400px;
+      height: 2px;
+      background: var(--border);
+      border-radius: 1px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 1px;
+      transition: width 0.3s ease;
+    }
+
+    /* ── Timer ring ── */
+    .timer-ring {
+      position: relative;
+      width: 64px;
+      height: 64px;
+    }
+
+    .timer-ring svg {
+      transform: rotate(-90deg);
+    }
+
+    .timer-ring-track { fill: none; stroke: var(--border); stroke-width: 3; }
+    .timer-ring-fill  { fill: none; stroke: var(--accent); stroke-width: 3;
+                        stroke-dasharray: 163; stroke-dashoffset: 0;
+                        transition: stroke-dashoffset 1s linear; }
+
+    .timer-number {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 1.1rem;
+      color: var(--text);
+    }
+
+    /* ── Distractor ── */
+    .distractor-problem {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 2rem;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+    }
+
+    .distractor-input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 1.5rem;
+      text-align: center;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      width: 120px;
+      outline: none;
+    }
+    .distractor-input:focus { border-color: var(--accent); }
+
+    .feedback {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--accent);
+      min-height: 1.2em;
+    }
+
+    /* ── Block badge ── */
+    .block-badge {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .block-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+    }
+    .block-dot.active { background: var(--accent); }
+
+    /* ── Divider ── */
+    .divider {
+      width: 40px;
+      height: 1px;
+      background: var(--border);
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- SCREEN: intro -->
+  <div class="screen active" id="screen-intro">
+    <div class="label">Memory Study</div>
+    <h1>You will be shown a series of images.<br>Look carefully at each one.</h1>
+    <p>The images will appear briefly. Your task is simply to look at them — you will be tested on what you remember shortly afterward.</p>
+    <p>There will be two rounds. Please give each image your full attention.</p>
+    <button class="btn" onclick="startBlock(0)">Begin</button>
+  </div>
+
+  <!-- SCREEN: encoding instructions -->
+  <div class="screen" id="screen-encoding-instructions">
+    <div class="label" id="enc-instr-label">Round 1 of 2</div>
+    <h1>Study these images carefully.</h1>
+    <p>You will see <strong style="color:var(--text)">10 images</strong>, each displayed for 2 seconds. Look at each one — do not look away.</p>
+    <p>You will be tested on these images shortly.</p>
+    <button class="btn" id="enc-instr-btn">Start slideshow</button>
+  </div>
+
+  <!-- SCREEN: encoding slideshow -->
+  <div class="screen" id="screen-encoding">
+    <div class="label" id="enc-label">Encoding — image 1 of 10</div>
+    <div class="image-frame">
+      <img id="enc-img" src="" alt="Stimulus image">
+    </div>
+    <div class="timer-ring">
+      <svg width="64" height="64" viewBox="0 0 64 64">
+        <circle class="timer-ring-track" cx="32" cy="32" r="26"/>
+        <circle class="timer-ring-fill" id="timer-fill" cx="32" cy="32" r="26"/>
+      </svg>
+      <div class="timer-number" id="timer-number">2</div>
+    </div>
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="enc-progress" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- SCREEN: distractor -->
+  <div class="screen" id="screen-distractor">
+    <div class="label">Short break</div>
+    <h1>Answer these quickly.</h1>
+    <p>Solve the arithmetic problems below before the recognition task begins.</p>
+    <div class="distractor-problem" id="dist-problem"></div>
+    <input class="distractor-input" id="dist-input" type="number" placeholder="?">
+    <div class="feedback" id="dist-feedback"></div>
+    <div class="mono" id="dist-counter">Problem 1 of 3</div>
+  </div>
+
+  <!-- SCREEN: recognition instructions -->
+  <div class="screen" id="screen-recognition-instructions">
+    <div class="label" id="rec-instr-label">Recognition task</div>
+    <h1>Did you see this image?</h1>
+    <p>You will now see 20 images — some you studied, some you did not.</p>
+    <p>For each image, respond <strong style="color:var(--text)">OLD</strong> if you think you saw it in the slideshow, or <strong style="color:var(--text)">NEW</strong> if you think it is new.</p>
+    <p><em style="color:var(--text-dim)">Go with your first instinct. Do not overthink.</em></p>
+    <button class="btn" id="rec-instr-btn">Start recognition task</button>
+  </div>
+
+  <!-- SCREEN: recognition trial -->
+  <div class="screen" id="screen-recognition">
+    <div class="label" id="rec-label">Image 1 of 20</div>
+    <div class="image-frame">
+      <img id="rec-img" src="" alt="Test image">
+    </div>
+    <div class="response-buttons">
+      <button class="btn-old" onclick="recordResponse('old')">OLD</button>
+      <button class="btn-new" onclick="recordResponse('new')">NEW</button>
+    </div>
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="rec-progress" style="width:0%"></div>
+    </div>
+    <div class="mono" id="rec-hint">↑ Was this image in the slideshow?</div>
+  </div>
+
+  <!-- SCREEN: between blocks -->
+  <div class="screen" id="screen-between-blocks">
+    <div class="block-badge">
+      <div class="block-dot active" id="dot-1"></div>
+      <div class="block-dot" id="dot-2"></div>
+    </div>
+    <div class="label">Round 1 complete</div>
+    <h1>Take a short break.<br>Round 2 begins shortly.</h1>
+    <p>The next round follows the same format — a new set of images to study, followed by a recognition task.</p>
+    <button class="btn" onclick="startBlock(1)">Continue to Round 2</button>
+  </div>
+
+  <!-- SCREEN: complete -->
+  <div class="screen" id="screen-complete">
+    <div class="label">Task complete</div>
+    <h1>Thank you.</h1>
+    <p>Your responses have been recorded. The survey will continue automatically.</p>
+    <div class="mono" id="complete-status">Sending results…</div>
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// CONFIGURATION — edit this section to match your image files
+// ─────────────────────────────────────────────
+
+const IMAGE_BASE = './images'; // relative to this file in your repo
+
+// Each array: 10 encoding images, then 10 foil images (20 total per block)
+// Replace filenames with your actual CFD / BOSS filenames
+const STIMULI = {
+  faces: {
+    encoding: [
+      'CFD-AF-200-001-N.jpg', 'CFD-AF-200-002-N.jpg', 'CFD-AF-200-003-N.jpg',
+      'CFD-AF-200-004-N.jpg', 'CFD-AF-200-005-N.jpg', 'CFD-AM-200-001-N.jpg',
+      'CFD-AM-200-002-N.jpg', 'CFD-AM-200-003-N.jpg', 'CFD-AM-200-004-N.jpg',
+      'CFD-AM-200-005-N.jpg'
+    ],
+    foils: [
+      'CFD-WF-200-001-N.jpg', 'CFD-WF-200-002-N.jpg', 'CFD-WF-200-003-N.jpg',
+      'CFD-WF-200-004-N.jpg', 'CFD-WF-200-005-N.jpg', 'CFD-WM-200-001-N.jpg',
+      'CFD-WM-200-002-N.jpg', 'CFD-WM-200-003-N.jpg', 'CFD-WM-200-004-N.jpg',
+      'CFD-WM-200-005-N.jpg'
+    ]
+  },
+  objects: {
+    encoding: [
+      'BOSS_001.jpg', 'BOSS_002.jpg', 'BOSS_003.jpg', 'BOSS_004.jpg', 'BOSS_005.jpg',
+      'BOSS_006.jpg', 'BOSS_007.jpg', 'BOSS_008.jpg', 'BOSS_009.jpg', 'BOSS_010.jpg'
+    ],
+    foils: [
+      'BOSS_011.jpg', 'BOSS_012.jpg', 'BOSS_013.jpg', 'BOSS_014.jpg', 'BOSS_015.jpg',
+      'BOSS_016.jpg', 'BOSS_017.jpg', 'BOSS_018.jpg', 'BOSS_019.jpg', 'BOSS_020.jpg'
+    ]
+  }
+};
+
+// Distractor arithmetic problems (shown between encoding and recognition)
+const DISTRACTOR_PROBLEMS = [
+  { q: '17 + 28 = ?', a: 45 },
+  { q: '63 − 19 = ?', a: 44 },
+  { q: '8 × 7 = ?',   a: 56 }
+];
+
+// Encoding display duration in milliseconds
+const ENCODING_DURATION_MS = 2000;
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+
+// Parse URL params: token only — order is randomised internally
+const params  = new URLSearchParams(window.location.search);
+const token   = params.get('token') || '';
+
+// Coin flip — randomised at page load, reported in results
+const treatment  = Math.random() < 0.5 ? 'faces_first' : 'objects_first';
+const blockOrder = treatment === 'objects_first'
+  ? ['objects', 'faces']
+  : ['faces', 'objects'];
+
+// Results accumulator
+const results = {
+  token,
+  treatment,
+  startTime: new Date().toISOString(),
+  blocks: {}
+};
+
+// Current task state
+let currentBlockIndex = 0;
+let currentBlock      = null; // 'faces' | 'objects'
+let encodingImages    = [];   // {id, src} shown during encoding
+let recognitionTrials = [];   // {id, src, isOld} shuffled
+let recognitionIndex  = 0;
+let encodingIndex     = 0;
+let encodingTimer     = null;
+let distractorIndex   = 0;
+
+// ─────────────────────────────────────────────
+// SCREEN MANAGEMENT
+// ─────────────────────────────────────────────
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ─────────────────────────────────────────────
+// BLOCK FLOW
+// ─────────────────────────────────────────────
+
+function startBlock(blockIdx) {
+  currentBlockIndex = blockIdx;
+  currentBlock = blockOrder[blockIdx];
+
+  // Build image lists
+  const stimuli = STIMULI[currentBlock];
+  encodingImages = stimuli.encoding.map(f => ({
+    id: f,
+    src: `${IMAGE_BASE}/${currentBlock}/encoding/${f}`,
+    isOld: true
+  }));
+
+  const foilImages = stimuli.foils.map(f => ({
+    id: f,
+    src: `${IMAGE_BASE}/${currentBlock}/foils/${f}`,
+    isOld: false
+  }));
+
+  // Shuffle recognition trials
+  recognitionTrials = shuffle([...encodingImages, ...foilImages]);
+  recognitionIndex  = 0;
+  encodingIndex     = 0;
+
+  // Initialise results for this block
+  results.blocks[currentBlock] = {
+    shownOrder: encodingImages.map(i => i.id),
+    responses: {}
+  };
+
+  // Update round labels
+  const roundNum = blockIdx + 1;
+  document.getElementById('enc-instr-label').textContent = `Round ${roundNum} of 2`;
+  document.getElementById('enc-instr-btn').onclick = startEncoding;
+  document.getElementById('rec-instr-label').textContent = `Round ${roundNum} — Recognition`;
+  document.getElementById('rec-instr-btn').onclick = startRecognition;
+
+  show('screen-encoding-instructions');
+}
+
+// ─────────────────────────────────────────────
+// ENCODING SLIDESHOW
+// ─────────────────────────────────────────────
+
+function startEncoding() {
+  show('screen-encoding');
+  encodingIndex = 0;
+  showEncodingImage();
+}
+
+function showEncodingImage() {
+  if (encodingIndex >= encodingImages.length) {
+    clearTimeout(encodingTimer);
+    startDistractor();
+    return;
+  }
+
+  const img    = encodingImages[encodingIndex];
+  const total  = encodingImages.length;
+  const num    = encodingIndex + 1;
+
+  document.getElementById('enc-label').textContent =
+    `${blockLabel()} — Image ${num} of ${total}`;
+  document.getElementById('enc-img').src = img.src;
+  document.getElementById('enc-progress').style.width =
+    `${(encodingIndex / total) * 100}%`;
+
+  // Timer ring animation
+  startTimerRing(ENCODING_DURATION_MS);
+
+  encodingTimer = setTimeout(() => {
+    encodingIndex++;
+    showEncodingImage();
+  }, ENCODING_DURATION_MS);
+}
+
+function startTimerRing(durationMs) {
+  const fill   = document.getElementById('timer-fill');
+  const number = document.getElementById('timer-number');
+  const circ   = 2 * Math.PI * 26; // r=26
+
+  fill.style.transition = 'none';
+  fill.style.strokeDashoffset = 0;
+
+  let remaining = Math.ceil(durationMs / 1000);
+  number.textContent = remaining;
+
+  // Force reflow so transition resets
+  void fill.getBoundingClientRect();
+  fill.style.transition = `stroke-dashoffset ${durationMs}ms linear`;
+  fill.style.strokeDashoffset = circ;
+
+  const countInterval = setInterval(() => {
+    remaining--;
+    number.textContent = remaining > 0 ? remaining : '';
+    if (remaining <= 0) clearInterval(countInterval);
+  }, 1000);
+}
+
+// ─────────────────────────────────────────────
+// DISTRACTOR TASK
+// ─────────────────────────────────────────────
+
+function startDistractor() {
+  distractorIndex = 0;
+  show('screen-distractor');
+  showDistractorProblem();
+
+  document.getElementById('dist-input').addEventListener('keydown', handleDistractorKey);
+}
+
+function showDistractorProblem() {
+  const prob = DISTRACTOR_PROBLEMS[distractorIndex];
+  document.getElementById('dist-problem').textContent = prob.q;
+  document.getElementById('dist-input').value = '';
+  document.getElementById('dist-feedback').textContent = '';
+  document.getElementById('dist-counter').textContent =
+    `Problem ${distractorIndex + 1} of ${DISTRACTOR_PROBLEMS.length}`;
+  document.getElementById('dist-input').focus();
+}
+
+function handleDistractorKey(e) {
+  if (e.key !== 'Enter') return;
+  const input = parseInt(document.getElementById('dist-input').value, 10);
+  const correct = DISTRACTOR_PROBLEMS[distractorIndex].a;
+
+  if (input === correct) {
+    document.getElementById('dist-feedback').textContent = '✓ Correct';
+    document.getElementById('dist-input').removeEventListener('keydown', handleDistractorKey);
+    distractorIndex++;
+    if (distractorIndex >= DISTRACTOR_PROBLEMS.length) {
+      setTimeout(() => show('screen-recognition-instructions'), 600);
+    } else {
+      setTimeout(() => {
+        document.getElementById('dist-input').addEventListener('keydown', handleDistractorKey);
+        showDistractorProblem();
+      }, 600);
+    }
+  } else {
+    document.getElementById('dist-feedback').textContent = '✗ Try again';
+    document.getElementById('dist-input').value = '';
+  }
+}
+
+// ─────────────────────────────────────────────
+// RECOGNITION TASK
+// ─────────────────────────────────────────────
+
+function startRecognition() {
+  show('screen-recognition');
+  recognitionIndex = 0;
+  showRecognitionTrial();
+}
+
+function showRecognitionTrial() {
+  if (recognitionIndex >= recognitionTrials.length) {
+    blockComplete();
+    return;
+  }
+
+  const trial = recognitionTrials[recognitionIndex];
+  const total  = recognitionTrials.length;
+  const num    = recognitionIndex + 1;
+
+  document.getElementById('rec-label').textContent =
+    `${blockLabel()} — Image ${num} of ${total}`;
+  document.getElementById('rec-img').src = trial.src;
+  document.getElementById('rec-progress').style.width =
+    `${(recognitionIndex / total) * 100}%`;
+}
+
+function recordResponse(response) {
+  const trial = recognitionTrials[recognitionIndex];
+  results.blocks[currentBlock].responses[trial.id] = {
+    response,            // 'old' | 'new'
+    correct: (response === 'old') === trial.isOld,
+    isOld: trial.isOld,
+    rt_ms: Date.now()    // rough — no per-image onset stored; replace with precise timing if needed
+  };
+  recognitionIndex++;
+  showRecognitionTrial();
+}
+
+// ─────────────────────────────────────────────
+// BLOCK COMPLETE / TRANSITION
+// ─────────────────────────────────────────────
+
+function blockComplete() {
+  if (currentBlockIndex === 0) {
+    // Update dot indicators
+    document.getElementById('dot-1').classList.add('active');
+    show('screen-between-blocks');
+  } else {
+    allBlocksComplete();
+  }
+}
+
+function allBlocksComplete() {
+  show('screen-complete');
+  results.endTime = new Date().toISOString();
+
+  // Post to parent LimeSurvey page
+  try {
+    window.parent.postMessage({
+      source: 'recognition_task',
+      results: results
+    }, '*');
+    document.getElementById('complete-status').textContent = 'Results sent. ✓';
+  } catch (e) {
+    document.getElementById('complete-status').textContent =
+      'Standalone mode — results logged to console.';
+    console.log('RECOGNITION TASK RESULTS:', JSON.stringify(results, null, 2));
+  }
+}
+
+// ─────────────────────────────────────────────
+// UTILITIES
+// ─────────────────────────────────────────────
+
+function blockLabel() {
+  return currentBlock.charAt(0).toUpperCase() + currentBlock.slice(1);
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+</script>
+</body>
+</html>
