@@ -247,7 +247,8 @@
     <h1>You will be shown a series of images.<br>Look carefully at each one.</h1>
     <p>The images will appear briefly. Your task is simply to look at them — you will be tested on what you remember shortly afterward.</p>
     <p>There will be two rounds. Please give each image your full attention.</p>
-    <button class="btn" onclick="startBlock(0)">Begin</button>
+    <button class="btn" id="begin-btn" onclick="startBlock(0)" disabled>Loading images…</button>
+    <div class="label" id="preload-status" style="margin-top:0.5rem">Please wait</div>
   </div>
 
   <!-- SCREEN: encoding instructions -->
@@ -383,6 +384,46 @@ const DISTRACTOR_PROBLEMS = [
 
 // Encoding display duration in milliseconds
 const ENCODING_DURATION_MS = 2000;
+
+// ─────────────────────────────────────────────
+// PRELOADING
+// ─────────────────────────────────────────────
+function preloadAllImages() {
+  const allImages = [];
+  ['faces', 'objects'].forEach(function(block) {
+    ['encoding', 'foils'].forEach(function(folder) {
+      STIMULI[block][folder].forEach(function(filename) {
+        allImages.push(IMAGE_BASE + '/' + block + '/' + folder + '/' + filename);
+      });
+    });
+  });
+
+  let loaded = 0;
+  const total = allImages.length;
+  const statusEl = document.getElementById('preload-status');
+
+  allImages.forEach(function(src) {
+    const img = new Image();
+    img.onload = img.onerror = function() {
+      loaded++;
+      if (statusEl) statusEl.textContent = 'Loading images… ' + loaded + ' / ' + total;
+      if (loaded >= total) {
+        const btn = document.getElementById('begin-btn');
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Begin';
+        }
+        if (statusEl) statusEl.textContent = 'Ready!';
+      }
+    };
+    img.src = src;
+  });
+}
+
+// Start preloading immediately on page load
+window.addEventListener('load', function() {
+  preloadAllImages();
+});
 
 // ─────────────────────────────────────────────
 // STATE
