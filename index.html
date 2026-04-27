@@ -435,11 +435,11 @@ function startBlock(blockIdx) {
 
   // Build image lists
   const stimuli = STIMULI[currentBlock];
-  encodingImages = stimuli.encoding.map(f => ({
+  encodingImages = shuffle(stimuli.encoding.map(f => ({
     id: f,
     src: `${IMAGE_BASE}/${currentBlock}/encoding/${f}`,
     isOld: true
-  }));
+  })));
 
   const foilImages = stimuli.foils.map(f => ({
     id: f,
